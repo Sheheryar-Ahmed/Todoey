@@ -11,26 +11,16 @@ import UIKit
 class ToDoeyTableViewController: UITableViewController {
 
     var itemArray=[Item]()
-    var defaults=UserDefaults.standard
+    let dataFile=FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-      let newItem=Item()
-        newItem.title="Find Jack"
-        newItem.done=false
-      let newItem2=Item()
-        newItem2.title="Buy Eggos"
-        newItem2.done=false
-      let newItem3=Item()
-        newItem3.title="Destroy abnandhan"
-        newItem3.done=false
         
-        itemArray.append(newItem)
-        itemArray.append(newItem2)
-        itemArray.append(newItem3)
-        if let items=defaults.array(forKey: "ToDoListArray") as? [Item]{
-        itemArray=items
-        }
-    }
+        
+     
+        loadItems()
+           }
 
     //MARK - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -53,13 +43,9 @@ class ToDoeyTableViewController: UITableViewController {
     //MARK - TableView delegate methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if itemArray[indexPath.row].done==true{
-           itemArray[indexPath.row].done=false
-        }
-        else{
-            itemArray[indexPath.row].done=true
-        }
-        tableView.reloadData()
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+       SaveItems()
+        
      tableView.deselectRow(at: indexPath, animated: true)
     }
 
@@ -71,9 +57,9 @@ class ToDoeyTableViewController: UITableViewController {
             newItem.title=textfield.text!
             
             self.itemArray.append(newItem)
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
-            self.tableView.reloadData()
-        }
+            self.SaveItems()
+           
+              }
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder="add new item"
             textfield=alertTextField
@@ -82,5 +68,36 @@ class ToDoeyTableViewController: UITableViewController {
         alert.addAction(action)
         present(alert,animated: true,completion: nil)
     }
-}
 
+
+    func SaveItems(){
+        let encoder=PropertyListEncoder()
+        do{
+            let data = try encoder.encode(itemArray)
+            try data.write(to:dataFile!)
+        }
+            
+        catch{
+            print("Error in encoding")
+        }
+        tableView.reloadData()
+        
+    }
+    func loadItems(){
+        if let data = try? Data(contentsOf: dataFile!) {
+            let decoder=PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            }
+            catch{
+                print("Error decoding item array")
+            }
+        }
+        
+    }
+
+
+
+
+
+}
